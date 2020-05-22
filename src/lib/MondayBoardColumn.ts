@@ -2,7 +2,7 @@
 // Map the type as listed in the column defintion with info about what it is
 // plus a converter to get it in the right format
 
-// export const 
+// export const
 
 // enum MondayBoardColumnType {
 //   AutoNumber: 'autonumber',

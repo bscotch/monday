@@ -1,4 +1,4 @@
-import MondaySdk from "monday-sdk-js";
+import fetch from "cross-fetch";
 import {MondayUser} from "./MondayUser";
 import {MondayBoardGroup} from "./MondayBoardGroup";
 import {MondayBoardColumn} from "./MondayBoardColumn";
@@ -26,7 +26,6 @@ class MondayBoard {
   private _id = "";
   private _name = "";
   private _token = "";
-  private _api = MondaySdk().api;
   private _columns: MondayBoardColumn[] = [];
   private _users: MondayUser[] = [];
   private _groups: MondayBoardGroup[] = [];
@@ -42,18 +41,9 @@ class MondayBoard {
     if(options.id){
       this._id = options.id;
     }
-    this.setUpClient();
   }
 
-  setUpClient(){
-    const client = MondaySdk();
-    client.setToken(this._token);
-    this._api = client.api;
-  }
 
-  get api(){
-    return this._api;
-  }
   get id(){
     return this._id;
   }
@@ -122,8 +112,7 @@ class MondayBoard {
         email
       }
     }`;
-    const res = await this.api(query);
-    const data: MondayBoardSearchResponse = res.data;
+    const data: MondayBoardSearchResponse = await this.api(query);
     if(!data.users?.length || !data.boards?.length){
       throw new Error("Could not find board.");
     }
@@ -140,6 +129,18 @@ class MondayBoard {
     };
   }
 
+  private async api(query:string){
+    const res = await fetch(`https://api.monday.com/v2`,{
+      method: 'POST',
+      body: JSON.stringify({query}),
+      headers: {
+        Authorization: this._token,
+        "Content-Type": "application/json"
+      }
+    });
+    const data = (await res.json()).data;
+    return data;
+  }
 }
 
 /** Instance a MondayBoard object by fetching summary data */
