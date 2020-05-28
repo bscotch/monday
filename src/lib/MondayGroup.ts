@@ -14,6 +14,7 @@ export class MondayGroup {
 
   get id() { return this._id; }
   get title() { return this._title; }
+  get board() { return this._board; }
   get boardId() { return this._board.id; }
   get columns() { return [...this._board.columns]; }
   get api() { return this._board.api; }

@@ -2,6 +2,8 @@ import fetch from "cross-fetch";
 import {MondayUser} from "./MondayUser";
 import {MondayGroup} from "./MondayGroup";
 import {MondayColumn} from "./MondayColumn";
+import {MondayTag} from "./MondayTag";
+import { deeplog } from "../util";
 
 export interface MondayBoardOptions {
   /** Required to identify the board. */
@@ -13,11 +15,12 @@ export interface MondayBoardOptions {
 
 interface MondayBoardSearchResponse {
   users: MondayUser[],
+  tags: MondayTag[],
   boards: {
     id: string,
     name: string,
     groups: (MondayGroup & {archived?:boolean,deleted?:boolean})[],
-    columns:(MondayColumn & {archived?:boolean})[]
+    columns: (MondayColumn & {archived?:boolean})[]
   }[]
 }
 
@@ -29,6 +32,7 @@ export class MondayBoard {
   private _columns: MondayColumn[] = [];
   private _users: MondayUser[] = [];
   private _groups: MondayGroup[] = [];
+  private _tags: MondayTag[] = [];
 
   constructor (options: MondayBoardOptions){
     if(!options.id){
@@ -63,6 +67,9 @@ export class MondayBoard {
   get columns(){
     return [...this._columns];
   }
+  get tags(){
+    return [...this._tags];
+  }
   get asObject(){
     return {
       id: this._id,
@@ -70,6 +77,7 @@ export class MondayBoard {
       users: this._users.map(user=>user.asObject),
       groups: this._groups.map(group=>group.asObject),
       columns: this._columns.map(column=>column.asObject),
+      tags: this._tags.map(tag=>tag.asObject),
     };
   }
   toObject(){
@@ -77,7 +85,11 @@ export class MondayBoard {
   }
 
   getGroupByName(groupName: string){
-    return this.groups.find(group=>group.title.toLowerCase() == groupName.toLowerCase());
+    return this._groups.find(group=>group.title.toLowerCase() == groupName.toLowerCase());
+  }
+
+  getTagByName(tagName: string){
+    return this._tags.find(tag=>tag.name.toLowerCase() == tagName.toLowerCase());
   }
 
   /** Update properties (such as users, groups, column definitions)
@@ -95,6 +107,8 @@ export class MondayBoard {
     }));
     this._columns = boardInfo.columns
       .map(columnInfo=> new MondayColumn(columnInfo));
+    this._tags = boardInfo.tags
+      .map(tag=>new MondayTag(tag));
     return this;
   }
 
@@ -103,6 +117,11 @@ export class MondayBoard {
    */
   private async getBoardInfo(){
     const query = `query {
+      tags {
+        id
+        name
+        color
+      }
       boards (ids: ${this._id}) {
         id
         name
@@ -136,7 +155,8 @@ export class MondayBoard {
       name: board.name,
       users: data.users,
       groups: board.groups,
-      columns: board.columns
+      columns: board.columns,
+      tags: data.tags
     };
   }
 

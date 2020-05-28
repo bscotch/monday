@@ -27,6 +27,7 @@ describe("Tests",async function(){
   });
 
   it("can instance a board object",async function(){
+    this.timeout(5000);
     expect(board.id).to.equal(testBoardId);
     expect(board.name).to.equal(testBoardName);
     const boardFields = ['users','columns','groups'] as const;
