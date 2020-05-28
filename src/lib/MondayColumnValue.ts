@@ -223,7 +223,7 @@ export class MondayColumnValue {
     this._requireType(MondayColumnType.Tags);
     tagNames = Array.isArray(tagNames) ? tagNames : [tagNames];
     assert(tagNames.every(tag=>tag && typeof tag == 'string'),'Tags must be strings');
-    const tags = (tagNames.map(tagName=>this._item.board.getTagByName(tagName))
+    const tags = (tagNames.map(tagName=>this._item.board.account.getTagByName(tagName))
       .filter(tag=>tag)) as MondayTag[]; // Remove tags that don't already exist. Maybe later add missing tags to the account?
     // TODO: Map tag text onto tag ids from parent board (somehow...)
     assert(tags.length,"No provided tags exist in the account");

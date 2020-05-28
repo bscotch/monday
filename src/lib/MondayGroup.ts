@@ -22,7 +22,7 @@ export class MondayGroup {
   // Items are created in a group.
   async createItem(name:string){
     const newItem = new MondayItem({name, group: this});
-    await newItem.save();
+    await newItem.push();
     return newItem;
   }
 

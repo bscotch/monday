@@ -1,21 +1,9 @@
-import fetch from "cross-fetch";
-import {MondayUser} from "./MondayUser";
 import {MondayGroup} from "./MondayGroup";
 import {MondayColumn} from "./MondayColumn";
-import {MondayTag} from "./MondayTag";
 import { stringsAreEqual } from "../util";
-
-export interface MondayBoardOptions {
-  /** Required to identify the board. */
-  id: string,
-  /** API Token (required to actually talk to Monday.com)
-   * Can also be set with env var MONDAY_API_TOKEN */
-  token?: string
-}
+import type { MondayAccount } from "./MondayAccount";
 
 interface MondayBoardSearchResponse {
-  users: MondayUser[],
-  tags: MondayTag[],
   boards: {
     id: string,
     name: string,
@@ -28,68 +16,39 @@ export class MondayBoard {
 
   private _id = "";
   private _name = "";
-  private _token = "";
+  private _account: MondayAccount;
   private _columns: MondayColumn[] = [];
-  private _users: MondayUser[] = [];
   private _groups: MondayGroup[] = [];
-  private _tags: MondayTag[] = [];
 
-  constructor (options: MondayBoardOptions){
+  constructor (options: {id: string, name: string, account: MondayAccount}){
     if(!options.id){
       throw new Error("Board id is required!");
     }
-    this._token = options.token || process.env.MONDAY_API_TOKEN || "";
-    if(!this._token){
-      throw new Error("An API token is required.");
-    }
-    if(options.id){
-      this._id = options.id;
-    }
+    this.updateWithRemoteData(options);
+    this._account = options.account;
   }
 
   get api(){
     // Children need to call this function so the `this` context
     // must be forced to the Board.
-    return this._api.bind(this);
+    return this._account.api;
   }
-  get id(){
-    return this._id;
-  }
-  get name(){
-    return this._name;
-  }
-  get users(){
-    return [...this._users];
-  }
-  get groups(){
-    return [...this._groups];
-  }
-  get columns(){
-    return [...this._columns];
-  }
-  get tags(){
-    return [...this._tags];
-  }
+  get account(){ return this._account; }
+  get id(){ return this._id; }
+  get name(){ return this._name; }
+  get groups(){ return [...this._groups]; }
+  get columns(){ return [...this._columns]; }
+
   get asObject(){
     return {
       id: this._id,
       name: this._name,
-      users: this._users.map(user=>user.asObject),
       groups: this._groups.map(group=>group.asObject),
       columns: this._columns.map(column=>column.asObject),
-      tags: this._tags.map(tag=>tag.asObject),
     };
   }
   toObject(){
     return this.asObject;
-  }
-
-  getUserById(id:string){
-    return this._users.find(user=>user.id==id);
-  }
-
-  getUserByEmail(email:string){
-    return this._users.find(user=>user.email==email);
   }
 
   getGroupByName(groupName: string){
@@ -100,44 +59,28 @@ export class MondayBoard {
     return this._columns.find(column=>stringsAreEqual(column.title, columnName));
   }
 
-  getTagByName(tagName: string){
-    return this._tags.find(tag=>stringsAreEqual(tag.name, tagName));
+  updateWithRemoteData(options: Partial<{id:string,name:string}>){
+    this._id = options.id || this.id;
+    this._name = options.name || this.name;
   }
 
   /** Update properties (such as users, groups, column definitions)
    *  with up-to-date values from Monday.com */
-  async refresh(){
+  async pull(){
     const boardInfo = await this.getBoardInfo();
     this._id = boardInfo.id;
     this._name = boardInfo.name;
-    // Users (don't replace the objects -- update them!)
-    for(const userInfo of boardInfo.users){
-      const existingUser = this.getUserById(userInfo.id);
-      if(!existingUser){
-        this._users.push(new MondayUser(userInfo));
-      }
-      else{
-        existingUser.updateWithRemoteData(userInfo);
-      }
-    }
-    //   nuke deprecated users
-    for(let i=this._users.length-1 ; i> -1; i--){
-      if( ! boardInfo.users.find(user=>user.id==this._users[i].id)){
-        this._users.splice(i,1);
-      }
-    }
+
     // Groups
     this._groups = boardInfo.groups.map(groupInfo=> new MondayGroup({
       title: groupInfo.title,
       id: groupInfo.id,
       board: this
     }));
+
     // Columns (definitions)
     this._columns = boardInfo.columns
       .map(columnInfo=> new MondayColumn(columnInfo));
-    // Tags
-    this._tags = boardInfo.tags
-      .map(tag=>new MondayTag(tag));
     return this;
   }
 
@@ -146,11 +89,6 @@ export class MondayBoard {
    */
   private async getBoardInfo(){
     const query = `query {
-      tags {
-        id
-        name
-        color
-      }
       boards (ids: ${this._id}) {
         id
         name
@@ -165,16 +103,8 @@ export class MondayBoard {
           archived
         }
       }
-      users (kind: non_guests) {
-        id
-        name
-        email
-      }
     }`;
     const data: MondayBoardSearchResponse = await this.api(query);
-    if(!data.users?.length || !data.boards?.length){
-      throw new Error("Could not find board.");
-    }
     const board = data.boards[0];
     // Remove archived/deleted stuff
     board.groups = board.groups.filter(group=>!group.archived && !group.deleted);
@@ -182,36 +112,8 @@ export class MondayBoard {
     return {
       id: board.id,
       name: board.name,
-      users: data.users,
       groups: board.groups,
       columns: board.columns,
-      tags: data.tags
     };
   }
-
-  private async _api(query:string){
-    const fetchOptions = {
-      method: 'POST',
-      body: JSON.stringify({query}),
-      headers: {
-        Authorization: this._token,
-        "Content-Type": "application/json"
-      }
-    };
-    const res = await fetch(`https://api.monday.com/v2`,fetchOptions);
-    const body = await res.json();
-    const data = body.data;
-    if(!data){
-      console.log(body);
-      throw new Error(`Response failed with status: ${res.status}`);
-    }
-    return data;
-  }
-}
-
-/** Instance a MondayBoard object by fetching summary data */
-export async function fetchMondayBoard(options:MondayBoardOptions){
-  const board = new MondayBoard(options);
-  await board.refresh();
-  return board;
 }

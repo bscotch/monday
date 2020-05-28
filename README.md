@@ -89,12 +89,12 @@ const users    = board.users;
 const newItem = await myGroup.createItem('Item title');
 
 // Column Values are managed at the Item level. Changes
-// are only submitted upon `item.save()`
+// are only submitted upon `item.push()`
 const itemCheckbox = newItem.getColumnValueByName("Checkbox Column");
 itemCheckbox.setCheckbox(true);
 const itemTags = newItem.getColumnValueByName("Tags");
 itemTags.setTags(['a-tag','another-tag']); // Must already exist
-await newItem.save(); // Submit changed values to Monday.com
+await newItem.push(); // Submit changed values to Monday.com
 
 await newItem.delete(); // Perhaps you need to clean up after yourself.
 
@@ -121,7 +121,7 @@ setInterval(board.refresh, 60000); // refresh every minute
 // make sure your data is up to date before making a change
 await item.refresh();
 // ... do some stuff to the item
-await item.save();
+await item.push();
 ```
 
 ## Testing

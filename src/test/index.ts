@@ -5,7 +5,8 @@ const envPath = path.resolve(process.cwd(),'.env');
 import {deeplog} from "../util";
 dotenv.config({path:envPath});
 
-import { fetchMondayBoard, MondayBoard } from "../lib/MondayBoard";
+import {loadMondayAccount, MondayAccount} from "../lib/MondayAccount";
+import { MondayBoard } from "../lib/MondayBoard";
 import type { MondayGroup } from "../lib/MondayGroup";
 import type { MondayItem } from "../lib/MondayItem";
 import { MondayColumnValue } from "../lib/MondayColumnValue";
@@ -18,19 +19,36 @@ const testTagColumnName = process.env.TEST_COLUMN_NAME || 'tags';
 const testTagName = process.env.TEST_TAG_NAME || 'bugfix';
 
 describe("Tests",async function(){
+  let account: MondayAccount;
   let board: MondayBoard;
   let item: MondayItem;
 
   before(async function(){
     this.timeout(5000);
-    board = await fetchMondayBoard({id: testBoardId});
+    account = await loadMondayAccount();
+    expect(account,'Account must exist').to.exist;
+    board = account.getBoardById(testBoardId) as MondayBoard;
+    expect(board,'Board must exist').to.exist;
+  });
+
+  it("can get users from account",function(){
+    expect(account.users,'Must be at least one user')
+      .to.have.length.greaterThan(0);
+  });
+
+  it("can get tags from account", function(){
+    expect(account.tags,'Must be at least one tag')
+      .to.have.length.greaterThan(0);
+    expect(account.tags.some(tag=>tag.name.toLowerCase()==testTagName.toLowerCase()),
+      'Tags must include test tag'
+    ).to.be.true;
   });
 
   it("can instance a board object",async function(){
     this.timeout(5000);
     expect(board.id).to.equal(testBoardId);
     expect(board.name).to.equal(testBoardName);
-    const boardFields = ['users','columns','groups'] as const;
+    const boardFields = ['columns','groups'] as const;
     for(const field of boardFields){
       expect(board[field]).to.have.length.greaterThan(0);
     }
@@ -58,15 +76,15 @@ describe("Tests",async function(){
     expect(tagIds.every(tagId=>typeof tagId == 'number'),'tagIds should be numbers');
 
     // Save changes
-    await item.save();
+    await item.push();
     // After saving, item still has the new value and is no longer flagged as changed.
-    expect((itemTagColumnValue.value as {tag_ids:number[]}).tag_ids,'tags should be set after save')
+    expect((itemTagColumnValue.value as {tag_ids:number[]}).tag_ids,'tags should be set after push')
       .to.have.length.greaterThan(0);
-    expect(itemTagColumnValue.changed,`'changed' should get unflagged after save`)
+    expect(itemTagColumnValue.changed,`'changed' should get unflagged after push`)
       .to.be.false;
 
     // Refresh
-    await item.refresh();
+    await item.pull();
     expect((itemTagColumnValue.value as {tag_ids:number[]}).tag_ids,'tags should be set after refresh')
       .to.have.length.greaterThan(0);
     expect(itemTagColumnValue.changed,`'changed' should get unflagged after refresh`)

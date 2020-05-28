@@ -24,8 +24,8 @@ export class MondayItem {
   get board(){
     return this._group.board;
   }
-  get tags(){
-    return this._group.board.tags;
+  private get tags(){
+    return this._group.board.account.tags;
   }
   get boardId(){
     return this._group.boardId;
@@ -38,9 +38,9 @@ export class MondayItem {
     return this._values.find(value=>stringsAreEqual(value.name,columnName));
   }
 
-  async save(){
+  async push(){
     // If no _id, need to create.
-    assert(!this._deleted,'Cannot save deleted item');
+    assert(!this._deleted,'Cannot push deleted item');
     if(!this._id){
       // Return all field values so we know the full state.
       const query = `mutation {
@@ -69,7 +69,7 @@ export class MondayItem {
       const updatedColumns = this._values
         .filter(value=>value.changed);
       if(!updatedColumns.length){
-        console.log("Skipping save -- no columns changed");
+        console.log("Skipping push -- no columns changed");
       }
       // Need to DOUBLE-JSON-encode in order to escape quotes.
       const updatedColumnsString = JSON.stringify(JSON.stringify(
@@ -101,9 +101,9 @@ export class MondayItem {
   }
 
   /** Update cached data with what's on the server (will clear any unsaved changes!) */
-  async refresh(){
-    assert(this.id,'Item cannot be refreshed -- it has no ID');
-    assert(!this._deleted,'Cannot refresh deleted item ');
+  async pull(){
+    assert(this.id,'Item cannot be pulled -- it has no ID');
+    assert(!this._deleted,'Cannot pull deleted item ');
     const query = `query {
       items (ids: [${this.id}]) {
         column_values {
