@@ -1,7 +1,7 @@
 import fetch from "cross-fetch";
 import {MondayUser} from "./MondayUser";
-import {MondayBoardGroup} from "./MondayBoardGroup";
-import {MondayBoardColumn} from "./MondayBoardColumn";
+import {MondayGroup} from "./MondayGroup";
+import {MondayColumn} from "./MondayColumn";
 
 export interface MondayBoardOptions {
   /** Required to identify the board. */
@@ -16,19 +16,19 @@ interface MondayBoardSearchResponse {
   boards: {
     id: string,
     name: string,
-    groups: (MondayBoardGroup & {archived?:boolean,deleted?:boolean})[],
-    columns:(MondayBoardColumn & {archived?:boolean})[]
+    groups: (MondayGroup & {archived?:boolean,deleted?:boolean})[],
+    columns:(MondayColumn & {archived?:boolean})[]
   }[]
 }
 
-class MondayBoard {
+export class MondayBoard {
 
   private _id = "";
   private _name = "";
   private _token = "";
-  private _columns: MondayBoardColumn[] = [];
+  private _columns: MondayColumn[] = [];
   private _users: MondayUser[] = [];
-  private _groups: MondayBoardGroup[] = [];
+  private _groups: MondayGroup[] = [];
 
   constructor (options: MondayBoardOptions){
     if(!options.id){
@@ -43,7 +43,11 @@ class MondayBoard {
     }
   }
 
-
+  get api(){
+    // Children need to call this function so the `this` context
+    // must be forced to the Board.
+    return this._api.bind(this);
+  }
   get id(){
     return this._id;
   }
@@ -72,6 +76,10 @@ class MondayBoard {
     return this.asObject;
   }
 
+  getGroupByName(groupName: string){
+    return this.groups.find(group=>group.title.toLowerCase() == groupName.toLowerCase());
+  }
+
   /** Update properties (such as users, groups, column definitions)
    *  with up-to-date values from Monday.com */
   async refresh(){
@@ -80,10 +88,13 @@ class MondayBoard {
     this._name = boardInfo.name;
     this._users = boardInfo.users
       .map(userInfo=> new MondayUser(userInfo));
-    this._groups = boardInfo.groups
-      .map(groupInfo=> new MondayBoardGroup(groupInfo));
+    this._groups = boardInfo.groups.map(groupInfo=> new MondayGroup({
+      title: groupInfo.title,
+      id: groupInfo.id,
+      board: this
+    }));
     this._columns = boardInfo.columns
-      .map(columnInfo=> new MondayBoardColumn(columnInfo));
+      .map(columnInfo=> new MondayColumn(columnInfo));
     return this;
   }
 
@@ -129,16 +140,22 @@ class MondayBoard {
     };
   }
 
-  private async api(query:string){
-    const res = await fetch(`https://api.monday.com/v2`,{
+  private async _api(query:string){
+    const fetchOptions = {
       method: 'POST',
       body: JSON.stringify({query}),
       headers: {
         Authorization: this._token,
         "Content-Type": "application/json"
       }
-    });
-    const data = (await res.json()).data;
+    };
+    const res = await fetch(`https://api.monday.com/v2`,fetchOptions);
+    const body = await res.json();
+    const data = body.data;
+    if(!data){
+      console.log(body);
+      throw new Error(`Response failed with status: ${res.status}`);
+    }
     return data;
   }
 }
@@ -149,4 +166,3 @@ export async function fetchMondayBoard(options:MondayBoardOptions){
   await board.refresh();
   return board;
 }
-
