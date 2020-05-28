@@ -78,6 +78,6 @@ describe("Tests",async function(){
   });
 
   after(async function(){
-    // item.delete();
+    await item.delete();
   });
 });

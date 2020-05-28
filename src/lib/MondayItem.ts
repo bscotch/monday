@@ -1,6 +1,6 @@
 import type {MondayGroup} from "./MondayGroup";
 import { MondayColumnValueInfo, MondayColumnValue } from "./MondayColumnValue";
-import {deeplog,stringsAreEqual} from "../util";
+import {stringsAreEqual} from "../util";
 import assert from "assert";
 
 export class MondayItem {
@@ -8,6 +8,7 @@ export class MondayItem {
   private _name = "";
   private _group: MondayGroup;
   private _values: MondayColumnValue[] = [];
+  private _deleted = false;
 
   constructor(options:{id?:string,name:string,group: MondayGroup}){
     this._id = options.id;
@@ -18,6 +19,7 @@ export class MondayItem {
   get id(){ return this._id;}
   get name(){ return this._name;}
   get values(){ return [...this._values];}
+  get deleted(){ return this._deleted; }
   get board(){
     return this._group.board;
   }
@@ -41,7 +43,7 @@ export class MondayItem {
 
   async save(){
     // If no _id, need to create.
-    let query;
+    assert(!this._deleted,'Cannot save deleted item');
     if(!this._id){
       // Return all field values so we know the full state.
       const query = `mutation {
@@ -104,6 +106,7 @@ export class MondayItem {
   /** Update cached data with what's on the server (will clear any unsaved changes!) */
   async refresh(){
     assert(this.id,'Item cannot be refreshed -- it has no ID');
+    assert(!this._deleted,'Cannot refresh deleted item ');
     const query = `query {
       items (ids: [${this.id}]) {
         column_values {
@@ -139,10 +142,26 @@ export class MondayItem {
     }
   }
 
+  async delete(){
+    assert(this.id,'Item cannot be deleted -- it has no ID');
+    assert(!this._deleted,'Item is already deleted');
+    const query = `mutation {
+      delete_item (item_id: ${this.id}) {
+        id
+      }
+    }`;
+    const res = await this.api(query);
+    assert(res.delete_item && res.delete_item.id==this.id,'Item was not deleted');
+    this._deleted = true;
+    return this;
+  }
+
   get asObject(){
     return {
       id: this._id,
-      name: this._name
+      name: this._name,
+      values: this.values.map(value=>value.asObject),
+      deleted: this._deleted
     };
   }
   toObject(){
