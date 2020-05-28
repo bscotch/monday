@@ -1,10 +1,10 @@
 
 export class MondayTag {
-  private _id = "";
+  private _id = 0;
   private _name = "";
   private _color = "";
 
-  constructor(options:{id:string,name:string,color:string}){
+  constructor(options:{id:number,name:string,color:string}){
     this._id = options.id;
     this._name = options.name;
     this._color = options.color;

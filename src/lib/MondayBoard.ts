@@ -3,7 +3,7 @@ import {MondayUser} from "./MondayUser";
 import {MondayGroup} from "./MondayGroup";
 import {MondayColumn} from "./MondayColumn";
 import {MondayTag} from "./MondayTag";
-import { deeplog } from "../util";
+import { deeplog, stringsAreEqual } from "../util";
 
 export interface MondayBoardOptions {
   /** Required to identify the board. */
@@ -85,11 +85,15 @@ export class MondayBoard {
   }
 
   getGroupByName(groupName: string){
-    return this._groups.find(group=>group.title.toLowerCase() == groupName.toLowerCase());
+    return this._groups.find(group=>stringsAreEqual(group.title,groupName));
+  }
+
+  getColumnByName(columnName: string){
+    return this._columns.find(column=>stringsAreEqual(column.title, columnName));
   }
 
   getTagByName(tagName: string){
-    return this._tags.find(tag=>tag.name.toLowerCase() == tagName.toLowerCase());
+    return this._tags.find(tag=>stringsAreEqual(tag.name, tagName));
   }
 
   /** Update properties (such as users, groups, column definitions)

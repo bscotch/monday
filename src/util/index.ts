@@ -17,3 +17,11 @@ export function isValidEmail(email:string){
 export function isDate(date:Date){
   return !isNaN(new Date(date).getTime());
 }
+
+/** Case-insentive (by default) string equality check */
+export function stringsAreEqual (string1:string,string2:string,ignoreCase=true){
+  if(ignoreCase){
+    return string1.toLowerCase() == string2.toLowerCase();
+  }
+  return string1==string2;
+}

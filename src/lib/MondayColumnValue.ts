@@ -3,6 +3,7 @@ import {MondayColumnType} from "./MondayColumn";
 import assert from "assert";
 import {codes as countryCodes} from "./country";
 import {isValidEmail,isDate} from "../util";
+import { MondayTag } from "./MondayTag";
 
 /** Throw error if not a string
  * @param {{[name:string]:string|void}} namedString {name:value} to allow printing the name in error messages
@@ -32,23 +33,27 @@ export interface MondayColumnValueInfo {
 }
 
 export class MondayColumnValue {
-  private _id: string|void;
+  private _id = "";
   private _item: MondayItem;
-  private _type: string;
-  private _title: string;
+  private _type = "";
+  private _title = "";
   private _value: {[field:string]:any}|null = null;
+  private _changed = false;
 
   constructor(options: MondayColumnValueInfo & {item: MondayItem}){
-    this._id    = options.id;
     this._item  = options.item;
-    this._type  = options.type;
-    this._title = options.title;
-    this.value  = options.value;
+    this.updateWithRemoteData(options);
   }
 
+  get id(){ return this._id; }
   get type(){ return this._type; }
-  get value(){ return this._value; }
+  get title(){ return this._title;}
+  get name(){ return this._title;}
 
+  get changed(){ return this._changed;}
+  set changed(hasChanged:boolean){ this._changed = hasChanged;}
+
+  get value(){ return this._value; }
   set value (value: string|{[field:string]:any}|null){
     if(typeof value == 'string'){
       this._value = JSON.parse(value);
@@ -56,6 +61,17 @@ export class MondayColumnValue {
     else{
       this._value = value;
     }
+    this._changed = true;
+  }
+
+  updateWithRemoteData (options: Partial<MondayColumnValueInfo> & Pick<MondayColumnValueInfo,'value'>){
+    this._id    = options.id || this._id;
+    this._type  = options.type || this._type;
+    this._title = options.title || this._title;
+    this.value = options.value;
+    // This is now up to date with the remote,
+    // and therefore by definition NOT changed.
+    this._changed = false;
   }
 
   // There are many possible ways to handle setting values. Each column type has
@@ -64,11 +80,12 @@ export class MondayColumnValue {
   // Therefore a super helpful approach for clients of this object is simply to have
   // a method per type, thus providing type information in the caller.
 
+
   setCheckbox(checked: boolean){
     this._requireType(MondayColumnType.Checkbox);
     assert(typeof checked == 'boolean','Input must be boolean');
     this.value = {checked: true};
-    return this.value;
+    return this;
   }
 
   setCountry(countryCode: string){
@@ -78,7 +95,7 @@ export class MondayColumnValue {
     const countryName = countryCodes[countryCode as CountryCode];
     assert(countryName,'Country code not supported');
     this.value = {countryCode,countryName};
-    return this.value;
+    return this;
   }
 
   setDate(date: Date){
@@ -90,7 +107,7 @@ export class MondayColumnValue {
       date: `${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`,
       time: `${date.getUTCHours()}-${date.getUTCMinutes()}-${date.getUTCSeconds()}`
     };
-    return this.value;
+    return this;
   }
 
   /** Add tags/labels. Must already exist. */
@@ -102,7 +119,7 @@ export class MondayColumnValue {
     assert(labels.length>0,'Must specify at least one label');
     assert(labels.every(label=>label && typeof label=='string'), 'Every label must be a string');
     this.value = {labels};
-    return this.value;
+    return this;
   }
 
   /** Set an email and optional display text */
@@ -118,7 +135,7 @@ export class MondayColumnValue {
       value.text = text;
     }
     this.value = value;
-    return this.value;
+    return this;
   }
 
   setHour(hour: number, minute = 0){
@@ -126,7 +143,7 @@ export class MondayColumnValue {
     assert(typeof hour == 'number','Hour must be a number');
     assert(typeof minute == 'number', "Minute must be a number");
     this.value = {hour,minute};
-    return this.value;
+    return this;
   }
 
   setName(name: string){
@@ -134,7 +151,7 @@ export class MondayColumnValue {
     requireString({name});
     assert(name.length && name.length < 256,'Name must be 1-255 characters');
     this.value = name;
-    return this.value;
+    return this;
   }
 
   setLink(url: string, text?: string){
@@ -146,7 +163,7 @@ export class MondayColumnValue {
       value.text = text;
     }
     this.value = value;
-    return this.value;
+    return this;
   }
 
   setLongText(text:string){
@@ -154,7 +171,7 @@ export class MondayColumnValue {
     requireString({text});
     assert(text.length && text.length<=2000,'Text length must be 1-2000');
     this.value = {text};
-    return this.value;
+    return this;
   }
 
   setNumber(number:number){
@@ -162,8 +179,7 @@ export class MondayColumnValue {
     assert(typeof number=='number','number must be number');
     assert(isFinite(number),'number must be finite');
     this.value = `${number}`;
-    return this.value;
-    return this.value;
+    return this;
   }
 
   setPeople(mondayUserIds: number|number[]){
@@ -176,7 +192,7 @@ export class MondayColumnValue {
     this.value = {
       personsAndTeams: mondayUserIds.map(id=>{return {id,kind:'person'};})
     };
-    return this.value;
+    return this;
 
   }
 
@@ -185,14 +201,14 @@ export class MondayColumnValue {
     assert(countryCodes[countryCode as CountryCode],'Country code not found');
     assert(`${phone}`.match(/^\d{10,20}$/),"Phone mumber must be digits-only string or integer");
     this.value = {phone, countryShortName:countryCode};
-    return this.value;
+    return this;
   }
 
   setRating(rating: number){
     this._requireType(MondayColumnType.Rating);
     assert(typeof rating == 'number' && rating >= 1,'Rating must be number >=1');
     this.value = {rating};
-    return this.value;
+    return this;
   }
 
   /** Set a status to one that already exists on the column. */
@@ -200,24 +216,28 @@ export class MondayColumnValue {
     this._requireType(MondayColumnType.Status);
     requireString({status});
     this.value = {label:status};
-    return this.value;
+    return this;
   }
 
-  setTags(tags: string|string[]){
+  setTags(tagNames: string|string[]){
     this._requireType(MondayColumnType.Tags);
-    tags = Array.isArray(tags) ? tags : [tags];
-    assert(tags.every(tag=>tag && typeof tag == 'string'),'Tags must be strings');
+    tagNames = Array.isArray(tagNames) ? tagNames : [tagNames];
+    assert(tagNames.every(tag=>tag && typeof tag == 'string'),'Tags must be strings');
+    const tags = (tagNames.map(tagName=>this._item.board.getTagByName(tagName))
+      .filter(tag=>tag)) as MondayTag[]; // Remove tags that don't already exist. Maybe later add missing tags to the account?
     // TODO: Map tag text onto tag ids from parent board (somehow...)
-
-    throw new Error("Need to map tag ids onto strings!");
-    return this.value;
+    assert(tags.length,"No provided tags exist in the account");
+    this.value = {
+      tag_ids: tags.map(tag=>tag.id)
+    };
+    return this;
   }
 
   setText(text: string){
     this._requireType(MondayColumnType.Text);
     requireString({text});
     this.value = text;
-    return this.value;
+    return this;
   }
 
   setTimeline(from:Date,to:Date){
