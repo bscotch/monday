@@ -11,14 +11,19 @@ export class MondayUser {
   public linkedAccount: any;
 
   constructor(userInfo:{id:string,name:string,email:string}){
-    this._id = userInfo.id;
-    this._name = userInfo.name;
-    this._email = userInfo.email;
+    this.updateWithRemoteData(userInfo);
   }
 
   get id(){ return this._id; }
   get name(){ return this._name; }
   get email(){ return this._email; }
+
+  updateWithRemoteData (options: Partial<MondayUser>){
+    this._id = options.id || this._id;
+    this._name = options.name || this._name;
+    this._email = options.email || this._email;
+    return this;
+  }
 
   get asObject(){
     return {

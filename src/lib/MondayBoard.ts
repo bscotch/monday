@@ -3,7 +3,7 @@ import {MondayUser} from "./MondayUser";
 import {MondayGroup} from "./MondayGroup";
 import {MondayColumn} from "./MondayColumn";
 import {MondayTag} from "./MondayTag";
-import { deeplog, stringsAreEqual } from "../util";
+import { stringsAreEqual } from "../util";
 
 export interface MondayBoardOptions {
   /** Required to identify the board. */
@@ -84,6 +84,14 @@ export class MondayBoard {
     return this.asObject;
   }
 
+  getUserById(id:string){
+    return this._users.find(user=>user.id==id);
+  }
+
+  getUserByEmail(email:string){
+    return this._users.find(user=>user.email==email);
+  }
+
   getGroupByName(groupName: string){
     return this._groups.find(group=>stringsAreEqual(group.title,groupName));
   }
@@ -102,15 +110,32 @@ export class MondayBoard {
     const boardInfo = await this.getBoardInfo();
     this._id = boardInfo.id;
     this._name = boardInfo.name;
-    this._users = boardInfo.users
-      .map(userInfo=> new MondayUser(userInfo));
+    // Users (don't replace the objects -- update them!)
+    for(const userInfo of boardInfo.users){
+      const existingUser = this.getUserById(userInfo.id);
+      if(!existingUser){
+        this._users.push(new MondayUser(userInfo));
+      }
+      else{
+        existingUser.updateWithRemoteData(userInfo);
+      }
+    }
+    //   nuke deprecated users
+    for(let i=this._users.length-1 ; i> -1; i--){
+      if( ! boardInfo.users.find(user=>user.id==this._users[i].id)){
+        this._users.splice(i,1);
+      }
+    }
+    // Groups
     this._groups = boardInfo.groups.map(groupInfo=> new MondayGroup({
       title: groupInfo.title,
       id: groupInfo.id,
       board: this
     }));
+    // Columns (definitions)
     this._columns = boardInfo.columns
       .map(columnInfo=> new MondayColumn(columnInfo));
+    // Tags
     this._tags = boardInfo.tags
       .map(tag=>new MondayTag(tag));
     return this;
