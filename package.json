@@ -10,7 +10,7 @@
     "test": "npm run build && npx mocha ./build/test/index.js",
     "build": "rm -rf build && npx tsc",
     "prepare": "npm run build",
-    "preversion": "git checkout develop && git pull",
+    "preversion": "git checkout develop && git pull && npm test",
     "postversion": "git push && git checkout master && git merge develop && git push && npm publish && git checkout develop"
   },
   "keywords": [

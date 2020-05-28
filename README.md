@@ -21,75 +21,63 @@ can help you as much as possible.
 
 Install from **npm**: `npm i 
 
+**Typescript (node.js)**
+
+```ts
+import {fetchMondayAccount} from "@bscotch/monday";
+const yourMondayAPIToken = 'your private token';
+
+// Load an account in an async function somewhere:
+const account = await fetchMondayAccount(yourMondayAPIToken);
+
+// ...or by chaining with `then`:
+fetchMondayAccount(yourMondayAPIToken)
+  .then(account=>{/** do something */});
+```
+
 **JavaScript (node.js):**
 
 ```js
 const {fetchMondayBoard} = require('@bscotch/monday');
-const yourMondayAPIToken = 'your private token';
 
-/** Sample function for loading a board.
- * @param {string} boardId */
-async function manageBoard(boardId){
-  const board = await fetchMondayboard({
-    boardId,
-    token: yourMondayAPIToken
-  });
-  // do something with the board . . .
-}
-
-// Or chaining with `then`:
-fetchMondayBoard({boardId}).then(board=>{/** do something */});
+/** @typedef {import('@bscotch/monday').MondayAccount} MondayAccount
+ * (load other types similarly for typing via JSDoc)
+ * /
 ```
 
-**Typescript (node.js)**
-
-```ts
-import {fetchMondayBoard} from "@bscotch/monday";
-const yourMondayAPIToken = 'your private token';
-
-/** Sample function for loading a board. */
-async function manageBoard(boardId:string){
-  const board = await fetchMondayboard({
-    boardId,
-    token: yourMondayAPIToken
-  });
-  // do something with the board . . .
-}
-```
-
-Your API Token can also be specified via the environment
+Your API Token can be specified via the environment
 variable `MONDAY_API_TOKEN`, in which case you can leave it
-out of the board options.
+out of the account options.
 
 ## Usage
 
 ### Model
 
-BscotchMonday is board-focused, so everything is centered
-on the MondayBoard class. MondayBoards collect board-specific
-(e.g. groups) and global (e.g. users, tags) data. A MondayBoard
+BscotchMonday creates a heirarchy of classes starting with a MondayAccount. A MondayAccount contains and manages users, tags, boards, and other account-wide data. Each type of complex data has its own class. A MondayBoard
 contains a list of MondayGroups, which are the level at which
 you'll manage MondayItems.
 
 ```ts
-// Get a board
-const board    = await fetchMondayboard({boardId});
+// Get an account and account-wide data
+const account  = await fetchMondayAccount('your-api-token');
+const users    = account.users;
+const myUser   = account.getUserByEmail('email@example.com');
+const tags     = account.tags;
+const myTag    = account.getTagByName('my-tag');
 
-// Boards store global and board-specific data
-// (all refreshed by `await board.refresh()`)
+// Get a board and its data
+const board    = account.getBoardById('your-board-id');
 const groups   = board.groups;
 const myGroup  = board.getGroupByName('My Group');
 const tags     = board.tags;
-const myTag    = board.getTagByName('my-tag');
 const columns  = board.columns;
 const myColumn = board.getColumnByName('My Column');
-const users    = board.users;
 
 // Items are managed at the Group level
 const newItem = await myGroup.createItem('Item title');
 
-// Column Values are managed at the Item level. Changes
-// are only submitted upon `item.push()`
+// Column Values are managed at the Item level.
+// Change sare only submitted upon `item.push()`
 const itemCheckbox = newItem.getColumnValueByName("Checkbox Column");
 itemCheckbox.setCheckbox(true);
 const itemTags = newItem.getColumnValueByName("Tags");
@@ -103,23 +91,32 @@ await newItem.delete(); // Perhaps you need to clean up after yourself.
 ### Caching
 
 BscotchMonday caches data but has no automatic cache-updating
-behavior. Where relevant, instanced classes have a `.refresh()`
-method that will fetch up-to-date data at that heirarchical level.
+behavior. Where relevant, instanced classes have a `.pull()`
+method that will fetch up-to-date data at that heirarchical level
+(and replace local data with it).
+
 If you are using long-lived instances (which would be a good idea,
 since a lot of data has to be fetched on MondayBoard instancing)
 you may also want to set up some refresh logic.
 
+***WARNING:*** To keep things generally immutable, when you obtain arrays of things (like users, tags, etc) you'll usually end up with a shallow copy. While `.pull()`ed data tries to update instances in-place, it can't update your shallow copies. So always use BscotchMonday getters when you need to guarantee that you have complete and up-to-date data.
+
 ```ts
-// Perhaps refresh the board before doing new things, if
-// the prior stuff took a while
-await board.refresh();
+// Refresh the list of users, tags, boards, and any other
+// account-wide data (this triggers refreshes for each board as well)
+account.pull();
 
-// ... or set an interval to guarantee freshness
-setInterval(board.refresh, 60000); // refresh every minute
+// Perhaps you need a specific board to be refreshed more frequently
+// than others. Refresh a specific board:
+await board.pull();
 
-// Or if you are tracking a specific Item and need to
-// make sure your data is up to date before making a change
-await item.refresh();
+// Set an interval to guarantee freshness
+setInterval(board.pull, 60000); // refresh every minute
+
+// Make sure your Item is up to date before making a change
+// Items must be refreshed individually, since they are not
+// stored by any BscotchMonday instances.
+await item.pull();
 // ... do some stuff to the item
 await item.push();
 ```
