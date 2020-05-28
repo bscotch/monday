@@ -105,11 +105,14 @@ export class MondayAccount {
     for(const boardInfo of accountInfo.boards){
       const existingBoard = this._boards.find(b=>b.id==boardInfo.id);
       if(!existingBoard){
-        this._boards.push(new MondayBoard({
+        const newBoard = new MondayBoard({
           id: boardInfo.id,
           name: boardInfo.name,
           account: this,
-        }));
+        });
+        this._boards.push(newBoard);
+        // Since this is the first time we have it, load its data
+        await newBoard.pull();
       }
       else{
         existingBoard.updateWithRemoteData(boardInfo);
@@ -120,10 +123,6 @@ export class MondayAccount {
       if( ! accountInfo.boards.find(b=>b.id==this._boards[i].id)){
         this._boards.splice(i,1);
       }
-    }
-    //   refresh boards
-    for(const board of this._boards){
-      await board.pull();
     }
 
     return this;

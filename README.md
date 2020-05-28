@@ -91,7 +91,7 @@ await newItem.delete(); // Perhaps you need to clean up after yourself.
 ### Caching
 
 BscotchMonday caches data but has no automatic cache-updating
-behavior. Where relevant, instanced classes have a `.pull()`
+behavior. Where relevant, instances have a `.pull()`
 method that will fetch up-to-date data at that heirarchical level
 (and replace local data with it).
 
@@ -103,7 +103,7 @@ you may also want to set up some refresh logic.
 
 ```ts
 // Refresh the list of users, tags, boards, and any other
-// account-wide data (this triggers refreshes for each board as well)
+// account-wide data
 account.pull();
 
 // Perhaps you need a specific board to be refreshed more frequently
