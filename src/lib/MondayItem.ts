@@ -19,6 +19,7 @@ export class MondayItem {
   get id(){ return this._id;}
   get name(){ return this._name;}
   get values(){ return [...this._values];}
+  get columnValues() { return this.values; }
   get deleted(){ return this._deleted; }
   get board(){
     return this._group.board;
@@ -31,10 +32,6 @@ export class MondayItem {
   }
   get api(){
     return this._group.api;
-  }
-
-  getColumnByName(columnName:string){
-    return this._group.board.getColumnByName(columnName);
   }
 
   getColumnValueByName(columnName: string){

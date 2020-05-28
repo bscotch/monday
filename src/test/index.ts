@@ -1,8 +1,8 @@
 import {expect} from "chai";
-import {inspect} from "util";
 import dotenv from "dotenv";
 import path from "path";
 const envPath = path.resolve(process.cwd(),'.env');
+import {deeplog} from "../util";
 dotenv.config({path:envPath});
 
 import { fetchMondayBoard, MondayBoard } from "../lib/MondayBoard";
@@ -16,10 +16,6 @@ const testGroupName = process.env.TEST_GROUP_NAME || 'Things to do';
 const testItemName  = process.env.TEST_ITEM_NAME || 'This is only a test';
 const testTagColumnName = process.env.TEST_COLUMN_NAME || 'tags';
 const testTagName = process.env.TEST_TAG_NAME || 'bugfix';
-
-function deeplog (something:any){
-  console.log(inspect(something,false,null));
-}
 
 describe("Tests",async function(){
   let board: MondayBoard;
