@@ -42,7 +42,7 @@ export class MondayAccount {
     return this._boards.find(board=>board.id==id);
   }
 
-  getUserById(id:string){
+  getUserById(id:number){
     return this._users.find(user=>user.id==id);
   }
 

@@ -1,7 +1,7 @@
 
 export class MondayUser {
 
-  private _id = "";
+  private _id = 0;
   private _name = "";
   private _email = "";
 
@@ -10,7 +10,8 @@ export class MondayUser {
    *  (and extend this class to provide types for it). */
   public linkedAccount: any;
 
-  constructor(userInfo:{id:string,name:string,email:string}){
+  constructor(userInfo:{id:number,name:string,email:string}){
+    console.log(userInfo);
     this.updateWithRemoteData(userInfo);
   }
 
