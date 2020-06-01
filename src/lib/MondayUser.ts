@@ -11,7 +11,6 @@ export class MondayUser {
   public linkedAccount: any;
 
   constructor(userInfo:{id:number,name:string,email:string}){
-    console.log(userInfo);
     this.updateWithRemoteData(userInfo);
   }
 
