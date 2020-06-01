@@ -44,7 +44,7 @@ export class MondayItem {
     if(!this._id){
       // Return all field values so we know the full state.
       const query = `mutation {
-        create_item (board_id: ${this.boardId}, group_id: "${this._group.id}", item_name: "${this._name}") {
+        create_item (board_id: ${this.boardId}, group_id: "${this._group.id}", item_name: ${JSON.stringify(this._name)}) {
           id
           column_values {
             id

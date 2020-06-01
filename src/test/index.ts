@@ -14,7 +14,7 @@ import { MondayColumnValue } from "../lib/MondayColumnValue";
 const testBoardId   = process.env.TEST_BOARD_ID || '577318853';
 const testBoardName = process.env.TEST_BOARD_NAME || 'Automation Experiments';
 const testGroupName = process.env.TEST_GROUP_NAME || 'Things to do';
-const testItemName  = process.env.TEST_ITEM_NAME || 'This is only a test';
+const testItemName  = process.env.TEST_ITEM_NAME || 'This is "only" a test';
 const testTagColumnName = process.env.TEST_COLUMN_NAME || 'tags';
 const testTagName = process.env.TEST_TAG_NAME || 'bugfix';
 
