@@ -74,7 +74,8 @@ const columns  = board.columns;
 const myColumn = board.getColumnByName('My Column');
 
 // Items are managed at the Group level
-const newItem = await myGroup.createItem('Item title');
+const newItem = await myGroup.createItem('Item name');
+const oldItem = await myGroup.findItemByName('Item name')
 
 // Column Values are managed at the Item level.
 // Change sare only submitted upon `item.push()`

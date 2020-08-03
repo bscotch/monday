@@ -24,9 +24,6 @@ export class MondayItem {
   get board(){
     return this._group.board;
   }
-  private get tags(){
-    return this._group.board.account.tags;
-  }
   get boardId(){
     return this._group.boardId;
   }
@@ -97,7 +94,6 @@ export class MondayItem {
       this._internalizeColumnValues(columnValues);
     }
     return this;
-    // TODO: if column values, UPDATE
   }
 
   /** Update cached data with what's on the server (will clear any unsaved changes!) */

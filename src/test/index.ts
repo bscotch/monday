@@ -2,7 +2,7 @@ import {expect} from "chai";
 import dotenv from "dotenv";
 import path from "path";
 const envPath = path.resolve(process.cwd(),'.env');
-import {deeplog} from "../util";
+// import {deeplog} from "../util";
 dotenv.config({path:envPath});
 
 import {loadMondayAccount, MondayAccount} from "../lib/MondayAccount";
@@ -14,7 +14,7 @@ import { MondayColumnValue } from "../lib/MondayColumnValue";
 const testBoardId   = process.env.TEST_BOARD_ID || '577318853';
 const testBoardName = process.env.TEST_BOARD_NAME || 'Automation Experiments';
 const testGroupName = process.env.TEST_GROUP_NAME || 'Things to do';
-const testItemName  = process.env.TEST_ITEM_NAME || 'This is "only" a test';
+const testItemName  = process.env.TEST_ITEM_NAME || 'This is only a test';
 const testTagColumnName = process.env.TEST_COLUMN_NAME || 'tags';
 const testTagName = process.env.TEST_TAG_NAME || 'bugfix';
 
@@ -60,6 +60,14 @@ describe("Tests",async function(){
     expect(group,'Group should be discoverable by name').to.exist;
     item = await group.createItem(testItemName);
     expect(item.id,'Item should have been created').to.be.a('string');
+  });
+
+  it("can find an item",async function(){
+    this.timeout(5000);
+    const group = board.getGroupByName(testGroupName) as MondayGroup;
+    item = await group.findItemByName(testItemName) as MondayItem;
+    expect(item).to.exist;
+    expect(item.id,'Found item should have an id').to.be.a('string');
   });
 
   it("can update column values",async function(){
