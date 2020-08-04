@@ -87,6 +87,10 @@ export class MondayColumnValue {
     this.value = {checked: true};
     return this;
   }
+  getCheckbox(){
+    this._requireType(MondayColumnType.Checkbox);
+    return this.value as {checked: boolean};
+  }
 
   setCountry(countryCode: string){
     this._requireType(MondayColumnType.Country);
@@ -96,6 +100,10 @@ export class MondayColumnValue {
     assert(countryName,'Country code not supported');
     this.value = {countryCode,countryName};
     return this;
+  }
+  getCountry(){
+    this._requireType(MondayColumnType.Country);
+    return this.value as {countryCode:string,countryName:string};
   }
 
   setDate(date: Date){
@@ -109,6 +117,13 @@ export class MondayColumnValue {
     };
     return this;
   }
+  getDate(){
+    this._requireType(MondayColumnType.Date);
+    return this.value as {
+      date: string,
+      time: string
+    };
+  }
 
   /** Add tags/labels. Must already exist. */
   setDropdown(labels: string|string[]){
@@ -120,6 +135,10 @@ export class MondayColumnValue {
     assert(labels.every(label=>label && typeof label=='string'), 'Every label must be a string');
     this.value = {labels};
     return this;
+  }
+  getDropdown(){
+    this._requireType(MondayColumnType.Dropdown);
+    return this.value as {labels: string[]};
   }
 
   /** Set an email and optional display text */
@@ -137,6 +156,10 @@ export class MondayColumnValue {
     this.value = value;
     return this;
   }
+  getEmail(){
+    this._requireType(MondayColumnType.Email);
+    return this.value as {email:string,text?:string};
+  }
 
   setHour(hour: number, minute = 0){
     this._requireType(MondayColumnType.Hour);
@@ -145,6 +168,10 @@ export class MondayColumnValue {
     this.value = {hour,minute};
     return this;
   }
+  getHour(){
+    this._requireType(MondayColumnType.Hour);
+    return this.value as {hour:number,minute:number};
+  }
 
   setName(name: string){
     this._requireType(MondayColumnType.Name);
@@ -152,6 +179,10 @@ export class MondayColumnValue {
     assert(name.length && name.length < 256,'Name must be 1-255 characters');
     this.value = name;
     return this;
+  }
+  getName(){
+    this._requireType(MondayColumnType.Name);
+    return this.value as string;
   }
 
   setLink(url: string, text?: string){
@@ -165,6 +196,10 @@ export class MondayColumnValue {
     this.value = value;
     return this;
   }
+  getLink(){
+    this._requireType(MondayColumnType.Link);
+    return this.value as {url:string,text?:string};
+  }
 
   setLongText(text:string){
     this._requireType(MondayColumnType.LongText);
@@ -173,6 +208,10 @@ export class MondayColumnValue {
     this.value = {text};
     return this;
   }
+  getLongText(){
+    this._requireType(MondayColumnType.LongText);
+    return this.value as {text:string};
+  }
 
   setNumber(number:number){
     this._requireType(MondayColumnType.Number);
@@ -180,6 +219,10 @@ export class MondayColumnValue {
     assert(isFinite(number),'number must be finite');
     this.value = `${number}`;
     return this;
+  }
+  getNumber(){
+    this._requireType(MondayColumnType.Number);
+    return this.value as string;
   }
 
   setPeople(mondayUserIds: number|number[]){
@@ -193,7 +236,10 @@ export class MondayColumnValue {
       personsAndTeams: mondayUserIds.map(id=>{return {id,kind:'person'};})
     };
     return this;
-
+  }
+  getPeople(){
+    this._requireType(MondayColumnType.People);
+    return this.value as {personsAndTeams: {id:number,kind:'person'}[]};
   }
 
   setPhone(phone:string|number, countryCode='US'){
@@ -203,12 +249,20 @@ export class MondayColumnValue {
     this.value = {phone, countryShortName:countryCode};
     return this;
   }
+  getPhone(){
+    this._requireType(MondayColumnType.Phone);
+    return this.value as {phone:string|number, countryShortName:CountryCode};
+  }
 
   setRating(rating: number){
     this._requireType(MondayColumnType.Rating);
     assert(typeof rating == 'number' && rating >= 1,'Rating must be number >=1');
     this.value = {rating};
     return this;
+  }
+  getRating(){
+    this._requireType(MondayColumnType.Rating);
+    return this.value as {rating:number};
   }
 
   /** Set a status to one that already exists on the column. */
@@ -217,6 +271,10 @@ export class MondayColumnValue {
     requireString({status});
     this.value = {label:status};
     return this;
+  }
+  getStatus(){
+    this._requireType(MondayColumnType.Status);
+    return this.value as {label:string};
   }
 
   setTags(tagNames: string|string[]){
@@ -232,12 +290,22 @@ export class MondayColumnValue {
     };
     return this;
   }
+  getTags(){
+    this._requireType(MondayColumnType.Tags);
+    return this.value as {
+      tag_ids: number[]
+    };
+  }
 
   setText(text: string){
     this._requireType(MondayColumnType.Text);
     requireString({text});
     this.value = text;
     return this;
+  }
+  getText(){
+    this._requireType(MondayColumnType.Text);
+    return this.value as string;
   }
 
   setTimeline(from:Date,to:Date){
@@ -269,6 +337,7 @@ export class MondayColumnValue {
     // }
   }
 
+  /** Throw error if the current column isn't of this type */
   private _requireType(type:MondayColumnType){
     assert(this.type == type, `Column value is not type ${type}`);
   }
