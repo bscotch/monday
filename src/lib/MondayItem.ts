@@ -66,7 +66,8 @@ export class MondayItem {
       const updatedColumns = this._values
         .filter(value=>value.changed);
       if(!updatedColumns.length){
-        console.log("Skipping push -- no columns changed");
+        // Skip the push -- nothing has been changed
+        return this;
       }
       // Need to DOUBLE-JSON-encode in order to escape quotes.
       const updatedColumnsString = JSON.stringify(JSON.stringify(
