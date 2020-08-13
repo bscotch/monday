@@ -1,6 +1,6 @@
 {
   "name": "@bscotch/monday",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Simplify working with Monday.com boards for server-side actions in Node.js.",
   "main": "./build/index.js",
   "files": [
