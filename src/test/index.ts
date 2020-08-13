@@ -62,14 +62,6 @@ describe("Tests",async function(){
     expect(item.id,'Item should have been created').to.be.a('string');
   });
 
-  it("can find an item",async function(){
-    this.timeout(5000);
-    const group = board.getGroupByName(testGroupName) as MondayGroup;
-    item = await group.findItemByName(testItemName) as MondayItem;
-    expect(item).to.exist;
-    expect(item.id,'Found item should have an id').to.be.a('string');
-  });
-
   it("can update column values",async function(){
     this.timeout(8000);
 

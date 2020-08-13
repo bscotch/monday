@@ -26,36 +26,6 @@ export class MondayGroup {
     return newItem;
   }
 
-  /** Monday.com does not natively provide search-by-name. Have to instead fetch all active results in the Group until one matches. */
-  async findItemByName(name:string){
-    let page = 1;
-    let item: MondayItem|undefined;
-    while(true){
-      const query = `query {
-        boards (ids: ${this.boardId}) {
-          groups (ids: ${this.id}) {
-            items (page: ${page}){
-              id
-              name
-            }
-          }
-        }
-      }`;
-      const items = ((await this.api(query))?.boards[0]?.groups[0]?.items ||[]) as {id:string,name:string}[];
-      if(!items.length){
-        break;
-      }
-      const matchingItem = items.find(item=>item.name.toLowerCase().trim() == name.toLowerCase().trim());
-      if(matchingItem){
-        item = new MondayItem({group:this,...matchingItem});
-        await item.pull();
-        break;
-      }
-      page++ ;
-    }
-    return item;
-  }
-
   get asObject(){
     return {
       id: this._id,
