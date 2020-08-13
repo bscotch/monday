@@ -10,6 +10,7 @@ import { MondayBoard } from "../lib/MondayBoard";
 import type { MondayGroup } from "../lib/MondayGroup";
 import type { MondayItem } from "../lib/MondayItem";
 import { MondayColumnValue } from "../lib/MondayColumnValue";
+import { MondayColumnType, MondayColumn } from "../lib/MondayColumn";
 
 const testBoardId   = process.env.TEST_BOARD_ID || '577318853';
 const testBoardName = process.env.TEST_BOARD_NAME || 'Automation Experiments';
@@ -89,6 +90,23 @@ describe("Tests",async function(){
       .to.have.length.greaterThan(0);
     expect(itemTagColumnValue.changed,`'changed' should get unflagged after refresh`)
       .to.be.false;
+  });
+
+  it("can search for an item", async function(){
+    this.timeout(5000);
+    const group = item.group;
+    const textColumn = group.columns.find(column=>column.type==MondayColumnType.Text) as MondayColumn;
+    expect(textColumn,'There should be a text column').to.exist;
+    const searchValue = "This is some text";
+    const columnValue = item.getColumnValueByName(textColumn.title) as MondayColumnValue;
+    expect(columnValue,'Column value should exist').to.exist;
+    columnValue.setText(searchValue);
+    await item.push();
+
+    // Do a search
+    await item.pull();
+    const foundItem = await group.findItemByColumnValue(textColumn.title,searchValue);
+    expect(foundItem,'should be able to find an item by its value').to.exist;
   });
 
   after(async function(){

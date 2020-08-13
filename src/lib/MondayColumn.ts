@@ -34,9 +34,9 @@ export enum MondayColumnType {
 export class MondayColumn {
   private _id = "";
   private _title = "";
-  private _type = "";
+  private _type: MondayColumnType;
 
-  constructor(options:{id:string,title:string,type:string}){
+  constructor(options:{id:string,title:string,type:MondayColumnType}){
     this._id = options.id;
     this._title = options.title;
     this._type = options.type;

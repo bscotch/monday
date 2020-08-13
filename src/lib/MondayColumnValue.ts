@@ -37,7 +37,7 @@ export class MondayColumnValue {
   private _item: MondayItem;
   private _type = "";
   private _title = "";
-  private _value: {[field:string]:any}|null = null;
+  private _value: {[field:string]:any}|string|null = null;
   private _changed = false;
 
   constructor(options: MondayColumnValueInfo & {item: MondayItem}){
@@ -56,7 +56,13 @@ export class MondayColumnValue {
   get value(){ return this._value; }
   set value (value: string|{[field:string]:any}|null){
     if(typeof value == 'string'){
-      this._value = JSON.parse(value);
+      try{
+        this._value = JSON.parse(value);
+      }
+      // eslint-disable-next-line no-empty
+      catch{
+        this._value = value;
+      }
     }
     else{
       this._value = value;

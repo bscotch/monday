@@ -1,5 +1,6 @@
 import type {MondayBoard} from "./MondayBoard";
 import { MondayItem } from "./MondayItem";
+import { MondayColumnType } from "./MondayColumn";
 
 export class MondayGroup {
   private _id = "";
@@ -24,6 +25,35 @@ export class MondayGroup {
     const newItem = new MondayItem({name, group: this});
     await newItem.push();
     return newItem;
+  }
+
+  async findItemByColumnValue(columnName:string, columnValue:any){
+    const column = this.board.getColumnByName(columnName);
+    if(!column){
+      throw new Error(`Column ${columnName} does not exist.`);
+    }
+    const unsearchableColumnTypes = [
+      MondayColumnType.Tags,
+      MondayColumnType.People,
+      MondayColumnType.Dropdown
+    ];
+    if(unsearchableColumnTypes.includes(column.type)){
+      throw new Error(`Column type ${column.type} is not searchable.`);
+    }
+    const query = `query {
+      items_by_column_values (board_id: ${this.boardId}, column_id: ${JSON.stringify(column.id)}, column_value: ${JSON.stringify(columnValue)}) {
+        id
+        name
+      }
+    }`;
+    const results = await this.api(query);
+    const itemData = results.items_by_column_values as {id:string,name:string}[];
+    if(itemData[0]){
+      const item = new MondayItem({...itemData[0],group:this});
+      await item.pull();
+      return item;
+    }
+    return;
   }
 
   get asObject(){

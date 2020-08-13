@@ -21,6 +21,7 @@ export class MondayItem {
   get values(){ return [...this._values];}
   get columnValues() { return this.values; }
   get deleted(){ return this._deleted; }
+  get group(){ return this._group;}
   get board(){
     return this._group.board;
   }
