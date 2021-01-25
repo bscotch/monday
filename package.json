@@ -1,23 +1,16 @@
 {
   "name": "@bscotch/monday",
   "version": "0.4.0",
-  "description": "Simplify working with Monday.com boards for server-side actions in Node.js.",
+  "description": "[DEPRECATED] Simplify working with Monday.com boards for server-side actions in Node.js.",
   "main": "./build/index.js",
   "files": [
     "build/**/*"
   ],
   "scripts": {
     "test": "npm run build && npx mocha ./build/test/index.js",
-    "build": "rm -rf build && npx tsc",
-    "prepare": "npm run build",
-    "preversion": "git checkout develop && git pull && npm test",
-    "postversion": "git push && git checkout master && git merge develop && git push && npm publish && git checkout develop"
+    "build": "rm -rf build && npx tsc"
   },
-  "keywords": [
-    "monday",
-    "monday.com",
-    "api"
-  ],
+  "keywords": [],
   "dependencies": {
     "cross-fetch": "^3.0.5"
   },

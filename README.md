@@ -1,3 +1,11 @@
+# [DEPRECATED]
+
+We have abandoned this project/module after switching
+to a different service.
+
+You're welcome to fork this project and keep it going
+if you've found it useful!
+
 # BscotchMonday: The Monday.com API API
 
 ***WARNING:*** This project is in active development
